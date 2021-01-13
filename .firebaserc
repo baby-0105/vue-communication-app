@@ -1,0 +1,6 @@
+{
+  "projects": {
+    "default": "communication-app",
+    "community-app": "vue-community-app"
+  }
+}
