@@ -1,5 +1,8 @@
 # vue-community-app
 
+##app URL
+https://vue-community-app.web.app
+
 ## Project setup
 ```
 yarn install
