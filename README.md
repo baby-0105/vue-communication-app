@@ -1,6 +1,6 @@
 # vue-community-app
 
-##app URL
+## app URL
 https://vue-community-app.web.app
 
 ## Project setup
