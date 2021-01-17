@@ -1,62 +1,68 @@
 <template>
   <div class="flex h-screen">
-    <div class="w-1/5 bg-gray-800 text-white pt-3 px-4">
-      <div class="flex justify-between items-center">
-        <h1 class="font-semibold text-xl leading-tight">Communication app</h1>
-        <Notification />
-      </div>
-      <div class="flex items-center">
-        <span class="bg-yellow-400 rounded-full w-3 h-3 mr-2"></span>
-        <span class="opacity-50">{{ user.email }}</span>
-      </div>
-      <div class="mt-5 flex justify-between items-center">
-        <div class="font-bold opacity-50 text-lg">チャンネル</div>
-        <span @click="showChannelModal">➕</span>
-        <div class="z-10 fixed top-0 left-0 h-full w-full flex items-center justify-center"
-             style="background-color:rgba(0,0,0,0.5)"
-             v-show="channelModal"
-             @click="closeChannelModal">
-          <div class="z-20 bg-white text-gray-900 w-1/3 rounded-md" @click.stop>
-            <div class="flex flex-col p-6">
-              <div class="flex justify-between items-center">
-                <h2 class="text-3xl font-black leading-loose">チャンネルを作成する</h2>
-                <span class="text-4xl" @click="closeChannelModal">×</span>
-              </div>
-              <p>グループチャットを行う場所です。(例: #マーケティング)</p>
-              <div class="mt-8 font-semibold">名前</div>
-              <div class="my-3">
-                <input type="text" class="w-full rounded border-gray-900 border-solid border p-3" v-model="channel" />
-              </div>
-              <div class="flex justify-end">
-                <button class="px-8 py-2 rounded bg-green-900 font-bold text-white" @click="addChannel">作成</button>
+    <div class="flex flex-col justify-between w-full md:w-1/4 bg-gray-800 text-white pt-3 px-4" :class="{ 'hidden': hiddenMenu }">
+      <div>
+        <div class="flex justify-between items-center">
+          <h1 class="font-semibold leading-tight text-2xl md:text-xl">Communication app</h1>
+          <Notification />
+        </div>
+        <div class="flex items-center">
+          <span class="bg-yellow-400 rounded-full w-3 h-3 mr-2"></span>
+          <span class="opacity-50 text-lg md:text-md">{{ user.email }}</span>
+        </div>
+        <div class="mt-5 flex justify-between items-center">
+          <div class="font-bold opacity-50 text-lg">チャンネル</div>
+          <span @click="showChannelModal">➕</span>
+          <div class="z-10 fixed top-0 left-0 h-full w-full flex items-center justify-center"
+              style="background-color:rgba(0,0,0,0.5)"
+              v-show="channelModal"
+              @click="closeChannelModal">
+            <div class="z-20 bg-white text-gray-900 w-1/3 rounded-md" @click.stop>
+              <div class="flex flex-col p-6">
+                <div class="flex justify-between items-center">
+                  <h2 class="text-3xl font-black leading-loose">チャンネルを作成する</h2>
+                  <span class="text-4xl" @click="closeChannelModal">×</span>
+                </div>
+                <p>グループチャットを行う場所です。(例: #マーケティング)</p>
+                <div class="mt-8 font-semibold">名前</div>
+                <div class="my-3">
+                  <input type="text" class="w-full rounded border-gray-900 border-solid border p-3" v-model="channel" />
+                </div>
+                <div class="flex justify-end">
+                  <button class="px-8 py-2 rounded bg-green-900 font-bold text-white" @click="addChannel">作成</button>
+                </div>
               </div>
             </div>
           </div>
         </div>
+        <div class="opacity-50 mt-1 text-xl" v-for="channel in channels" :key="channel.id" @click="channelMessage(channel)"># {{ channel.channel_name }}</div>
+        <div class="mt-5 flex justify-between items-center">
+          <div class="font-bold opacity-50 text-lg">ダイレクトメッセージ</div>
+          <span>➕</span>
+        </div>
+        <div class="flex items-center" v-for="user in users" :key="user.user_id">
+          <span class="ml-1 rounded-full w-3 h-3 mr-2" :class="[isOnline(user) ? 'bg-yellow-400' : 'bg-gray-600']"></span>
+          <span class="opacity-50 text-xl" @click="directMessage(user)">{{ user.email }}</span>
+        </div>
       </div>
-      <div class="opacity-50 mt-1" v-for="channel in channels" :key="channel.id" @click="channelMessage(channel)"># {{ channel.channel_name }}</div>
-      <div class="mt-5 flex justify-between items-center">
-        <div class="font-bold opacity-50 text-lg">ダイレクトメッセージ</div>
-        <span>➕</span>
-      </div>
-      <div class="flex items-center" v-for="user in users" :key="user.user_id">
-        <span class="rounded-full w-3 h-3 mr-2" :class="[isOnline(user) ? 'bg-yellow-400' : 'bg-gray-600']"></span>
-        <span class="opacity-50" @click="directMessage(user)">{{ user.email }}</span>
+      <div class="text-center mb-5">
+        <button class=" py-1 px-2 bg-white text-black rounded" @click="signOut">サインアウト</button>
       </div>
     </div>
-    <div class="flex-grow bg-gray-100 h-screen">
+    <div class="flex-grow bg-gray-100 h-screen md:block" :class="{ 'hidden': hiddenMessage }">
       <header class="border-b">
         <div class="flex justify-between m-3">
-          <div class="font-bold text-lg">{{ channel_name }}</div>
+          <div class="font-bold text-lg">
+            <span class="mr-2" @click="showMenu" :class="{ 'hidden': hiddenMessage }"><font-awesome-icon class="text-xl opacity-50" icon="bars" /></span> {{ channel_name }}
+          </div>
           <div>
-            <button class="py-1 px-4 bg-gray-800 text-white rounded" @click="signOut">サインアウト</button>
+            <button class="py-1 px-2 bg-gray-800 text-white rounded md:px-4" @click="signOut">サインアウト</button>
           </div>
         </div>
       </header>
       <main class="home-message-main overflow-y-scroll" @dragenter="dragEnter" @dragleave="dragLeave" @drop.prevent="dropFile" @dragover.prevent>
-        <div class="h-full flex flex-col ml-6 relative">
+        <div class="h-full flex flex-col mx-6 relative">
           <div class="flex-grow overflow-y-scroll" id="message_bottom">
-            <p>メッセージ一覧</p>
             <div class="mt-2 mb-4 flex" v-for="message in messages" :key="message.key" style="pointer-events: none">
               <Avator :user="message.user" />
               <div class="ml-2">
@@ -137,7 +143,10 @@ export default {
       file_upload_modal: false,
       file_message: "",
       file: "",
-      url: ""
+      url: "",
+      hiddenMenu: false,
+      hiddenMessage: true,
+      showMessage: false
     }
   },
   methods: {
@@ -155,6 +164,11 @@ export default {
 
       this.channel_name = user.email
       this.placeholder = `${user.email} へのメッセージ`
+
+      if(this.hiddenMessage) {
+        this.hiddenMenu = true
+        this.hiddenMessage = false
+      }
 
       if(this.channel_id != "") {
         firebase.database().ref("messages").child(this.channel_id).off()
@@ -222,9 +236,20 @@ export default {
         firebase.database().ref("messages").child(this.channel_id).off();
       }
 
+      if(this.hiddenMessage) {
+        this.hiddenMenu = true
+        this.hiddenMessage = false
+      }
+
       firebase.database().ref("messages").child(channel.id).on("child_added", snapshot => {
         this.messages.push(snapshot.val())
       })
+    },
+    showMenu() {
+      if(!this.hiddenMessage) {
+        this.hiddenMenu = false
+        this.hiddenMessage = true
+      }
     },
     isOnline(user) {
       if(user.status == "online") {
@@ -250,14 +275,6 @@ export default {
     fileUpload() {
       const storageRef = firebase.storage().ref("images/" + this.file.name),
             uploadTask = storageRef.put(this.file);
-
-      // storageRef.getDownloadURL().then(url => {
-      //   this.url = url
-      // })
-
-      // let next     = function(snapshot) {},
-      //     error    = function(error) {},
-      //     complete = function() {};
 
       uploadTask.on(
         "state_changed",
