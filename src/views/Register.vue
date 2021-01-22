@@ -1,12 +1,12 @@
 <template>
-  <div class="bg-gradient-to-r from-purple-800 to-yellow-600 flex flex-col h-screen">
+  <div class="bg-gradient-to-r from-purple-800 to-yellow-600 flex flex-col h-screen overflow-scroll">
     <header class="flex justify-between p-4 border-b items-center">
       <h1 class="font-semibold text-lg leading-tight md:text-xl">Communication app</h1>
       <button class="py-1 px-4 border-2 border-green-800 rounded">
         <router-link to="/signin">サインイン</router-link>
       </button>
     </header>
-    <div class="flex-auto">
+    <div class="flex-auto mb-16">
       <h1 class="text-center font-bold pt-12 text-3xl md:text-5xl">Slackライクなチャットアプリ<br>Communication app</h1>
       <div class="flex justify-center mt-16">
         <div class="w-4/5 border bg-white md:w-3/5">

@@ -1,6 +1,7 @@
 <template>
   <div class="flex h-screen">
-    <div class="flex flex-col justify-between w-full md:w-1/4 bg-gray-800 text-white pt-3 px-4" :class="{ 'hidden': hiddenMenu }">
+    <div class="flex flex-col justify-between w-full bg-gray-800 text-white pt-3 px-4 overflow-scroll md:w-1/4"
+         :class="{ 'hidden': hiddenMenu }">
       <div>
         <div class="flex justify-between items-center">
           <h1 class="font-semibold leading-tight text-2xl md:text-xl">Communication app</h1>
@@ -12,40 +13,29 @@
         </div>
         <div class="mt-5 flex justify-between items-center">
           <div class="font-bold opacity-50 text-lg">チャンネル</div>
-          <span @click="showChannelModal">➕</span>
-          <div class="z-10 fixed top-0 left-0 h-full w-full flex items-center justify-center"
-              style="background-color:rgba(0,0,0,0.5)"
-              v-show="channelModal"
-              @click="closeChannelModal">
-            <div class="z-20 bg-white text-gray-900 w-1/3 rounded-md" @click.stop>
-              <div class="flex flex-col p-6">
-                <div class="flex justify-between items-center">
-                  <h2 class="text-3xl font-black leading-loose">チャンネルを作成する</h2>
-                  <span class="text-4xl" @click="closeChannelModal">×</span>
-                </div>
-                <p>グループチャットを行う場所です。(例: #マーケティング)</p>
-                <div class="mt-8 font-semibold">名前</div>
-                <div class="my-3">
-                  <input type="text" class="w-full rounded border-gray-900 border-solid border p-3" v-model="channel" />
-                </div>
-                <div class="flex justify-end">
-                  <button class="px-8 py-2 rounded bg-green-900 font-bold text-white" @click="addChannel">作成</button>
-                </div>
-              </div>
-            </div>
-          </div>
+          <span @click="channelModal = true">➕</span>
+          <channelModal v-show="channelModal"
+                        :channel="channel"
+                        @close-channel-modal="channelModal = false"
+                        @add-channel="addChannel">
+          </channelModal>
         </div>
         <div class="opacity-50 mt-1 text-xl" v-for="channel in channels" :key="channel.id" @click="channelMessage(channel)"># {{ channel.channel_name }}</div>
         <div class="mt-5 flex justify-between items-center">
           <div class="font-bold opacity-50 text-lg">ダイレクトメッセージ</div>
-          <span>➕</span>
+          <span @click="messageModal = true">➕</span>
         </div>
+        <messageModal v-show="messageModal"
+                      :users="users"
+                      :message="message"
+                      @close-message-modal="messageModal = false">
+        </messageModal>
         <div class="flex items-center" v-for="user in users" :key="user.user_id">
           <span class="ml-1 rounded-full w-3 h-3 mr-2" :class="[isOnline(user) ? 'bg-yellow-400' : 'bg-gray-600']"></span>
           <span class="opacity-50 text-xl" @click="directMessage(user)">{{ user.email }}</span>
         </div>
       </div>
-      <div class="text-center mb-5">
+      <div class="text-center my-5">
         <button class=" py-1 px-2 bg-white text-black rounded" @click="signOut">サインアウト</button>
       </div>
     </div>
@@ -117,12 +107,16 @@
 import firebase from "firebase"
 import Notification from "../components/icons/Notification";
 import Avator from "../components/Avator";
+import ChannelModal from "../components/modal/ChannelModal";
+import MessageModal from "../components/modal/MessageModal";
 
 export default {
   name: 'Home',
   components: {
     Notification,
-    Avator
+    Avator,
+    ChannelModal,
+    MessageModal,
   },
   data() {
     return {
@@ -136,6 +130,7 @@ export default {
       channel: "",
       channel_id: "",
       channelModal: false,
+      messageModal: false,
       connectionRef: firebase.database().ref("connections"),
       connection_key: "",
       connections: [],
@@ -146,7 +141,7 @@ export default {
       url: "",
       hiddenMenu: false,
       hiddenMessage: true,
-      showMessage: false
+      showMessage: false,
     }
   },
   methods: {
@@ -157,6 +152,7 @@ export default {
     },
     directMessage(user) {
       this.messages = [];
+      this.user = firebase.auth().currentUser;
 
       this.user.uid > user.user_id
         ? (this.channel_id = `${this.user.uid} - ${user.user_id}`)
@@ -206,26 +202,18 @@ export default {
       this.url == "" ? this.message = "" : this.file_message == ""
       this.url = "";
     },
-    showChannelModal() {
-      this.channelModal = true;
-    },
-    closeChannelModal() {
-      this.channelModal = false;
-    },
-    addChannel() {
+    addChannel(channel) {
       const newChannel = firebase.database().ref("channel").push(),
             key_id     = newChannel.key;
 
       newChannel
       .set({
-        channel_name: this.channel,
+        channel_name: channel,
         id: key_id
       })
       .then(() => {
         this.channelModal = false
       })
-
-      this.channel = ""
     },
     channelMessage(channel) {
       this.messages = [];
