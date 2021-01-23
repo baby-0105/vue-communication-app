@@ -7,7 +7,7 @@
 <script>
   export default {
     name: "Avator",
-    props: ["users"],
+    props: ["user"],
     computed: {
       avator_url() {
         return "https://i.pravatar.cc/50?u=" + this.user;
