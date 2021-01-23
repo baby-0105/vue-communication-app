@@ -1,10 +1,10 @@
 <template>
-  <div class="flex h-screen">
-    <div class="flex flex-col justify-between w-full bg-gray-800 text-white pt-3 px-4 overflow-scroll md:w-1/4"
+  <div class="flex h-screen overflow-scroll">
+    <div class="flex flex-col justify-between bg-gray-800 w-full text-white pt-3 px-5 overflow-scroll md:min-w-min md:w-1/4"
          :class="{ 'hidden': hiddenMenu }">
       <div>
         <div class="flex justify-between items-center">
-          <h1 class="font-semibold leading-tight text-2xl md:text-xl">Communication app</h1>
+          <h1 class="font-semibold leading-tight text-2xl md:text-xl" @click="toReload()">Communication app</h1>
           <Notification />
         </div>
         <div class="flex items-center">
@@ -31,8 +31,9 @@
                       @close-message-modal="messageModal = false">
         </messageModal>
         <div class="flex items-center" v-for="user in users" :key="user.user_id">
-          <span class="ml-1 rounded-full w-3 h-3 mr-2" :class="[isOnline(user) ? 'bg-yellow-400' : 'bg-gray-600']"></span>
-          <span class="opacity-50 text-xl" @click="directMessage(user)">{{ user.email }}</span>
+          <span class="rounded-full w-3 h-3 mr-2" :class="[isOnline(user) ? 'bg-yellow-400' : 'bg-gray-600']"></span>
+          <span class="opacity-50 text-xl" @click="directMessage(user)" v-if="isOnline(user)">マイチャット</span>
+          <span class="opacity-50 text-xl" @click="directMessage(user)" v-else>{{ user.email }}</span>
         </div>
       </div>
       <div class="text-center my-5">
@@ -41,13 +42,9 @@
     </div>
     <div class="flex-grow bg-gray-100 h-screen md:block" :class="{ 'hidden': hiddenMessage }">
       <header class="border-b">
-        <div class="flex justify-between m-3">
-          <div class="font-bold text-lg">
-            <span class="mr-2" @click="showMenu" :class="{ 'hidden': hiddenMessage }"><font-awesome-icon class="text-xl opacity-50" icon="bars" /></span> {{ channel_name }}
-          </div>
-          <div>
-            <button class="py-1 px-2 bg-gray-800 text-white rounded md:px-4" @click="signOut">サインアウト</button>
-          </div>
+        <div class="flex items-center py-3 px-3 font-bold text-lg">
+          <span class="mr-auto" @click="showMenu" :class="{ 'hidden': hiddenMessage }"><font-awesome-icon class="text-4xl opacity-50 md:text-xl" icon="bars" /></span>
+          <p>{{ channel_name }}</p>
         </div>
       </header>
       <main class="home-message-main overflow-y-scroll" @dragenter="dragEnter" @dragleave="dragLeave" @drop.prevent="dropFile" @dragover.prevent>
@@ -64,8 +61,8 @@
               </div>
             </div>
           </div>
-          <div class="border border-gray-900 rounded mb-4">
-            <textarea class="w-full pt-4 pl-8 outline-none" :placeholder="placeholder" v-model="message"></textarea>
+          <div class="border border-gray-900 rounded">
+            <textarea class="w-full py-2 px-4 outline-none" :placeholder="placeholder" v-model="message"></textarea>
             <div class="bg-gray-100 p-2">
               <button class="bg-green-900 text-sm text-white font-bold py-1 px-2 rounded" @click="sendMessage">送信</button>
             </div>
@@ -150,6 +147,9 @@ export default {
       firebase.auth().signOut()
       this.$router.push("/signin")
     },
+    toReload() {
+      this.$router.go({path: this.$router.currentRoute.path, force: true})
+    },
     directMessage(user) {
       this.messages = [];
       this.user = firebase.auth().currentUser;
@@ -158,10 +158,10 @@ export default {
         ? (this.channel_id = `${this.user.uid} - ${user.user_id}`)
         : (this.channel_id = `${user.user_id} - ${this.user.uid}`);
 
-      this.channel_name = user.email
-      this.placeholder = `${user.email} へのメッセージ`
+      this.isOnline(user) ? this.channel_name = "マイチャット" : this.channel_name = user.email
+      this.isOnline(user) ? this.placeholder  = "マイチャット" : this.placeholder  = `${user.email} へのメッセージ`
 
-      if(this.hiddenMessage) {
+      if(this.hiddenMessage && window.innerWidth <= 768) {
         this.hiddenMenu = true
         this.hiddenMessage = false
       }
@@ -219,12 +219,13 @@ export default {
       this.messages = [];
       this.channel_name = "#" + channel.channel_name;
       this.channel_id = channel.id
+      this.placeholder = ''
 
       if(this.channel_id != "") {
         firebase.database().ref("messages").child(this.channel_id).off();
       }
 
-      if(this.hiddenMessage) {
+      if(this.hiddenMessage  && window.innerWidth <= 768) {
         this.hiddenMenu = true
         this.hiddenMessage = false
       }
